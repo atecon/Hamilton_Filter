@@ -1,0 +1,80 @@
+#clear
+set messages off
+set echo off
+
+####################################################################################
+#
+#		'Hamilton Filter'
+#		based on J. Hamilton's paper
+#
+#		"Why You Should Never Use the Hodrick-Prescott Filter"
+#	 	(revised version Oct. 2016)
+#		URL: http://econweb.ucsd.edu/~jhamilto/hp.pdf
+#		Blog1: http://econbrowser.com/archives/2016/08/why-you-should-never-use-the-hodrick-prescott-filter
+#		Blog2: http://fxdiebold.blogspot.de/2016/08/on-evils-of-hodrick-prescott-detrending.html
+#			
+#	Hamilton suggests to rely on the population linear
+#	projection of y t+h on a constant and the p most recent values
+#	of y as of date t.
+#
+#
+#	Input:
+#		y		- series, variable to filter
+#		hval	- int, 'h' projection horizon. Recommended: annual: h=2, quarterly:h=8, monthly:h=24
+#					NOTE: This wipes out any cycles with frequency of exactly one year
+#		pval 	- int, 'p' is the flexibility parameter; if D^d(y_t) (D:difference operator)
+#					is stationary of some value d,  choose p>d, Hamilton uses p=4 for quarterly data.
+#		verb	- int, 0:print NO output, 1:print output
+#
+#
+####################################################################################
+
+function series hamfilt(series y,
+    int hval, int pval, int verb[0:1:0])
+    
+    start = hval
+    ende = hval + pval -1
+    if verb==0
+        string opt="--quiet"
+    else
+        string opt=""
+    endif    
+    ols y const y(-hval to -ende) @opt
+    series cycle = $uhat
+    smpl ($t1 + hval + pval) ;
+    return cycle
+end function
+
+
+/*
+#----------
+# Example 
+#----------
+# Load Hamilton's data
+open \
+  /home/at/ownCloud/gretl_script/ExternalProgs/Hamilton2016_OnHPFilter/Hamilton_RATS/employment.csv
+setobs 4 1947:1 --time-series
+delete v1
+rename v2 nfp
+rename v3 nfp_nsa
+setinfo nfp --description="Employment, SA"
+setinfo nfp_nsa --description="Employment, NSA"
+series nfp_log = log(nfp)*100
+
+# Set parameters
+scalar pval = 4
+scalar hval = 8
+
+# Run procedure
+series nfp_hamfilt_SA = hamfilt(nfp_log,hval,pval)
+
+# Compare with standard HP-Filter
+series nfp_hpfilt_SA = hpfilt(nfp_log)
+
+# Plot both resulting cyclical components
+gnuplot nfp_hamfilt_SA nfp_hpfilt_SA --with-lines --time-series --output=display
+
+# Plot (P)ACF for both series
+corrgm nfp_hamfilt_SA --plot=display
+corrgm nfp_hpfilt_SA --plot=display
+*/

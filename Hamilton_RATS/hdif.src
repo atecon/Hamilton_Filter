@@ -1,0 +1,6 @@
+procedure hdif var_input var_output start end
+type series var_input *var_output
+type integer start end
+option integer hval 8
+set var_output start+hval end = var_input(t) - var_input(t-hval)
+end

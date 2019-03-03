@@ -1,0 +1,6 @@
+GDP 
+Consumption 
+Investment 
+Exports 
+Imports 
+Government
